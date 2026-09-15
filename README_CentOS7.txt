@@ -76,29 +76,39 @@
   3) Excel 不可用   -> sudo pip3 install openpyxl
   4) 远程无界面     -> VNC，或 ssh -X，或 export DISPLAY=:0
 
-八、打包为 Windows EXE（可选）
+八、打包为 Windows EXE + 一键安装包（可选）
 ------------------------------------------------------------
-  用 PyInstaller 可打成单个 .exe，无需对方安装 Python。
-  注意：必须 在 Windows 环境 上打包；Linux 只能打出 Linux 可执行文件。
+  用 PyInstaller 打成单个 .exe（已内嵌 Python 运行时和所有依赖，
+  目标电脑无需安装 Python），再用 Inno Setup 包成一键安装包
+  （带安装向导、桌面快捷方式、开始菜单、卸载入口）。
+
+  注意：必须在 Windows 环境上打包；Linux 只能打出 Linux 可执行文件。
 
   方式一（推荐·无需本机 Windows）: GitHub Actions 云构建
-    用 GitHub 免费提供的 Windows 构建机自动打包：
-    1. 把项目文件（device_manager.py / device_manager.spec /
-       device_manager.ico / build_exe.bat）上传到一个 GitHub 仓库
+    用 GitHub 免费提供的 Windows 构建机自动打包 EXE + 安装包：
+    1. 把项目文件上传到一个 GitHub 仓库
+       （device_manager.py / device_manager.spec / device_manager.ico /
+        device_manager_installer.iss / build_exe.bat / README_CentOS7.txt）
     2. 把 .github/workflows/build_exe.yml 也放进去
-    3. 仓库页 -> Actions -> "Build Windows EXE" -> Run workflow
-    4. 等 2~4 分钟 -> 打开本次运行 -> Artifacts -> 下载 exe
+    3. 仓库页 -> Actions -> "Build Windows EXE + Installer" -> Run workflow
+    4. 等 3~5 分钟 -> 打开本次运行 -> Artifacts -> 下载
+       DeviceManager-package.zip（内含 DeviceManager.exe 和安装包）
 
   方式二（本机有 Windows）: 双击 build_exe.bat 一键打包
     前提：安装 Python 3.8+（勾选 Add to PATH）
-    产物: dist\DeviceManager.exe（单文件、带图标、无控制台窗口）
+    可选：安装 Inno Setup 6（https://jrsoftware.org/isdl.php），
+          装了就会同时生成一键安装包，没装只生成绿色版 EXE
+    产物:
+      dist\DeviceManager.exe                     绿色版（拷走就能用）
+      Output\设备密码管理系统_Setup_v3.1.exe      一键安装包
 
   方式三（手动命令）:
     pip install pyinstaller openpyxl
     python -m PyInstaller --noconfirm --clean device_manager.spec
+    "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" device_manager_installer.iss
 
   说明：
-    * 单文件模式，生成的 exe 可拷贝到任意 Windows 电脑直接运行
-    * 数据仍保存在 用户目录\.device_manager\ 下（无需随 exe 分发）
-    * 打包前请保留 device_manager.ico（程序图标）
+    * 单文件 EXE 已内嵌 Python + openpyxl + tkinter，目标电脑零依赖
+    * 安装包会把程序装到 C:\Program Files\DeviceManager\，创建快捷方式和卸载入口
+    * 数据保存在 用户目录\.device_manager\ 下（卸载时默认保留，不丢数据）
     * 杀软可能误报，可加白名单；首次运行会较慢（解压到临时目录）

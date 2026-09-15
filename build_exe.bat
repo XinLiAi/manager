@@ -1,17 +1,19 @@
 @echo off
 chcp 65001 >nul
 rem ============================================================
-rem  设备密码管理系统 - Windows EXE 一键打包脚本
-rem  使用方法：在 Windows 上双击本文件即可
-rem  要求：已安装 Python 3.8+（安装时勾选 "Add Python to PATH"）
-rem  产物：dist\DeviceManager.exe （单文件，可拷贝到任意电脑运行）
+rem  设备密码管理系统 - Windows 一键打包脚本（EXE + 安装包）
+rem  双击本文件即可，产物：
+rem    1. dist\DeviceManager.exe          （单文件绿色版，拷走就能用）
+rem    2. Output\设备密码管理系统_Setup_v3.1.exe （一键安装包，带快捷方式/卸载）
+rem  要求：Python 3.8+（勾选 Add to PATH）
+rem        可选：Inno Setup 6（用于生成安装包，未装则只生成 EXE）
 rem ============================================================
 setlocal
 cd /d "%~dp0"
 
 echo.
 echo  ============================================
-echo   设备密码管理系统  Windows EXE 打包
+echo   设备密码管理系统  Windows 一键打包
 echo  ============================================
 echo.
 
@@ -34,22 +36,48 @@ if errorlevel 1 (
 )
 
 echo.
-echo  [2/3] 开始打包，约 1~3 分钟，请稍候...
+echo  [2/3] 打包 EXE（约 1~3 分钟）...
 python -m PyInstaller --noconfirm --clean device_manager.spec
 if errorlevel 1 (
-    echo  [错误] 打包失败，请查看上方报错信息
+    echo  [错误] EXE 打包失败，请查看上方报错信息
     pause
     exit /b 1
 )
 
 echo.
-echo  [3/3] 打包完成！
-echo.
-echo  ============================================
-echo   EXE 文件位置: dist\DeviceManager.exe
-echo   双击即可运行，无需安装 Python
-echo   数据存放在:   %USERPROFILE%\.device_manager\
-echo  ============================================
+echo  [3/3] 生成一键安装包...
+rem 尝试查找 Inno Setup 编译器 ISCC.exe
+set "ISCC="
+if exist "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" set "ISCC=C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+if exist "C:\Program Files\Inno Setup 6\ISCC.exe" set "ISCC=C:\Program Files\Inno Setup 6\ISCC.exe"
+where ISCC >nul 2>nul && for /f "delims=" %%i in ('where ISCC') do set "ISCC=%%i"
+
+if defined ISCC (
+    echo  找到 Inno Setup: %ISCC%
+    "%ISCC%" device_manager_installer.iss
+    if errorlevel 1 (
+        echo  [警告] 安装包编译失败，但 EXE 已生成
+    ) else (
+        echo.
+        echo  ============================================
+        echo   打包全部完成！
+        echo   绿色版:   dist\DeviceManager.exe
+        echo   安装包:   Output\设备密码管理系统_Setup_v3.1.exe
+        echo   数据目录: %%USERPROFILE%%\.device_manager\
+        echo  ============================================
+    )
+) else (
+    echo.
+    echo  [提示] 未检测到 Inno Setup，已生成绿色版 EXE。
+    echo  如需一键安装包，请安装 Inno Setup 6 后重新运行本脚本。
+    echo  下载地址: https://jrsoftware.org/isdl.php
+    echo.
+    echo  ============================================
+    echo   绿色版 EXE: dist\DeviceManager.exe
+    echo   双击即可运行，无需安装 Python
+    echo  ============================================
+)
+
 echo.
 pause
 endlocal
