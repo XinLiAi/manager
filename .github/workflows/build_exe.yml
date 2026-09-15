@@ -51,11 +51,19 @@ jobs:
 
       - name: 安装 Inno Setup（生成一键安装包）
         run: choco install innosetup -y --no-progress
+        continue-on-error: true
 
       - name: 编译安装包
         shell: cmd
+        continue-on-error: true
         run: |
-          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" device_manager_installer.iss
+          if exist "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" (
+            "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" device_manager_installer.iss
+          ) else if exist "C:\Program Files\Inno Setup 6\ISCC.exe" (
+            "C:\Program Files\Inno Setup 6\ISCC.exe" device_manager_installer.iss
+          ) else (
+            echo [警告] 未找到 ISCC.exe，跳过安装包生成（EXE 仍可正常下载）
+          )
 
       - name: 上传产物（EXE + 安装包）
         uses: actions/upload-artifact@v4
