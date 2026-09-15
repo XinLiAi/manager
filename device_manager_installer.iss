@@ -32,8 +32,11 @@ AppUpdatesURL=
 ; 安装包图标（如果有）
 ; SetupIconFile=device_manager.ico
 
-[Languages]
-Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
+; 注：不指定 [Languages] 段，使用 Inno Setup 内置默认语言（英文），
+; 避免因缺少 ChineseSimplified.isl 语言包导致编译失败。
+; 若从官网安装完整版 Inno Setup，可取消下面注释启用中文界面：
+; [Languages]
+; Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "创建桌面快捷方式"; GroupDescription: "附加图标:"; Flags: unchecked
