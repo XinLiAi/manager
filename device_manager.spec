@@ -35,6 +35,10 @@ a = Analysis(
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
+# 图标文件存在才使用，避免因缺图标导致打包失败
+_icon = os.path.join(SPECPATH, "device_manager.ico")
+_icon = _icon if os.path.exists(_icon) else None
+
 exe = EXE(
     pyz,
     a.scripts,
@@ -55,5 +59,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon="device_manager.ico",   # 程序图标
+    icon=_icon,                  # 程序图标（不存在则自动跳过）
 )
