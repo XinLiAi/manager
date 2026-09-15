@@ -1,27 +1,25 @@
-name: Build Windows EXE
+name: Build Windows EXE + Installer
 
 # ============================================================
-#  在 GitHub 云端自动打包 Windows EXE（免费，无需本机 Windows）
+#  在 GitHub 云端自动打包 Windows EXE + 一键安装包（免费，无需本机 Windows）
 # ============================================================
 #  使用步骤：
-#  1. 把本项目文件（device_manager.py / device_manager.spec /
-#     device_manager.ico / build_exe.bat / README_CentOS7.txt）
-#     上传到一个 GitHub 仓库（公开或私有均可）
-#  2. 把本文件放到仓库 .github/workflows/build_exe.yml
-#  3. 打开仓库页面 -> Actions -> 左侧选 "Build Windows EXE"
+#  1. 把本项目文件上传到一个 GitHub 仓库（公开或私有均可）
+#  2. 本文件放到仓库 .github/workflows/build_exe.yml
+#  3. 仓库页面 -> Actions -> 左侧 "Build Windows EXE + Installer"
 #     -> 右上角 "Run workflow" -> 绿色按钮
-#  4. 等约 2-4 分钟，构建完成 -> 打开本次运行 -> Artifacts
-#     -> 下载 DeviceManager-exe.zip，里面就是 DeviceManager.exe
+#  4. 等约 3-5 分钟 -> 打开本次运行 -> Artifacts
+#     -> 下载 DeviceManager-package.zip，里面含 EXE 和安装包
 # ============================================================
 
 on:
-  workflow_dispatch:        # 手动触发（Actions 页面点 Run workflow）
+  workflow_dispatch:
   push:
-    tags: ["v*"]            # 或打 tag（如 v1.0）时自动构建
+    tags: ["v*"]
 
 jobs:
   build:
-    runs-on: windows-latest          # GitHub 免费提供的 Windows 构建机
+    runs-on: windows-latest
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
@@ -30,7 +28,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-          cache: pip
 
       - name: 安装打包依赖
         run: |
@@ -40,9 +37,19 @@ jobs:
       - name: 打包 EXE（单文件、无控制台、带图标）
         run: python -m PyInstaller --noconfirm --clean device_manager.spec
 
-      - name: 上传 EXE 产物
+      - name: 安装 Inno Setup（生成一键安装包）
+        run: choco install innosetup -y --no-progress
+
+      - name: 编译安装包
+        shell: cmd
+        run: |
+          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" device_manager_installer.iss
+
+      - name: 上传产物（EXE + 安装包）
         uses: actions/upload-artifact@v4
         with:
-          name: DeviceManager-exe
-          path: dist/DeviceManager.exe
+          name: DeviceManager-package
+          path: |
+            dist/DeviceManager.exe
+            Output/*.exe
           if-no-files-found: error
